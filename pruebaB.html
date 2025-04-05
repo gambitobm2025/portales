@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Portal Vizual - Punto C</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; width: 100vw; height: 100vh;
+      background: #000; font-family: Arial, sans-serif;
+      overflow: hidden; color: white; display: flex;
+      flex-direction: column; align-items: center;
+    }
+    h1 {
+      margin: 20px 0 10px; font-size: 1.8rem; text-align: center;
+    }
+    #portal {
+      width: 90vw; max-width: 1080px; height: 1600px; max-height: 90vh;
+      background: #111; border: 12px solid cyan; border-radius: 40px;
+      box-shadow: 0 0 50px cyan; position: relative; overflow: hidden;
+      animation: blinkFrame 2s infinite;
+    }
+    #remoteVideo {
+      width: 100%; height: 100%; object-fit: cover;
+      border-radius: 28px; position: relative; z-index: 3;
+    }
+    @keyframes blinkFrame {
+      0%, 100% { box-shadow: 0 0 50px cyan; }
+      50% { box-shadow: 0 0 80px cyan; }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    @keyframes blinkLogo {
+      0%, 100% { opacity: 0.08; }
+      50% { opacity: 0.15; }
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🔵 Portal Vizual - Punto C</h1>
+
+<div id="portal">
+  <canvas id="remolinoCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none;"></canvas>
+
+  <img src="LOGO_VIZUAL_4K (1).png" id="logoVizual" style="
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70%; opacity: 0.08;
+    animation: blinkLogo 3s infinite;
+    z-index: 2; pointer-events: none;">
+
+  <video id="remoteVideo" autoplay playsinline></video>
+
+  <div id="statusText" style="
+    position: absolute; top: 50%;
+    left: 50%; transform: translate(-50%, -50%);
+    font-size: 2rem; color: cyan;
+    animation: blink 1s infinite; z-index: 4;">
+    Ningún portal conectado
+  </div>
+</div>
+
+<script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
+
+<script>
+// Crear el PeerJS con ID "puntoC"
+const peer = new Peer('puntoC', { debug: 2 });
+const remoteVideo = document.getElementById('remoteVideo');
+
+peer.on('open', id => {
+  console.log('Conectado como', id);
+});
+
+const peer = new Peer('puntoB', {
+  host: '164.90.157.189',
+  port: 9000,
+  path: '/myapp',
+  secure: false,
+  debug: 2
+});
+
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+    call.answer(stream);
+    call.on('stream', remoteStream => {
+      remoteVideo.srcObject = remoteStream;
+      ocultarRemolino();
+    });
+    call.on('close', () => {
+      mostrarRemolino();
+    });
+    call.on('error', () => {
+      mostrarRemolino();
+    });
+  });
+});
+
+// Funciones remolino/logo
+function mostrarRemolino() {
+  document.getElementById('remolinoCanvas').style.display = "block";
+  document.getElementById('statusText').style.display = "block";
+  document.getElementById('logoVizual').style.display = "block";
+}
+function ocultarRemolino() {
+  document.getElementById('remolinoCanvas').style.display = "none";
+  document.getElementById('statusText').style.display = "none";
+  document.getElementById('logoVizual').style.display = "none";
+}
+
+// Remolino animado
+const canvas = document.getElementById('remolinoCanvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+for (let i = 0; i < 100; i++) {
+  particles.push({
+    angle: Math.random() * 2 * Math.PI,
+    radius: Math.random() * Math.min(canvas.width, canvas.height) / 3,
+    speed: 0.002 + Math.random() * 0.003,
+    size: 2 + Math.random() * 3,
+    opacity: 0.3 + Math.random() * 0.5
+  });
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  particles.forEach(p => {
+    p.angle += p.speed;
+    const x = canvas.width / 2 + p.radius * Math.cos(p.angle);
+    const y = canvas.height / 2 + p.radius * Math.sin(p.angle);
+
+    ctx.beginPath();
+    ctx.arc(x, y, p.size, 0, 2 * Math.PI);
+    ctx.fillStyle = `rgba(0, 255, 255, ${p.opacity})`;
+    ctx.fill();
+  });
+
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+
+</body>
+</html>

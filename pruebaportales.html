@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Portal Vizual - MPORTAL</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; width: 100vw; height: 100vh;
+      background: #000; font-family: Arial, sans-serif;
+      overflow: hidden; color: white; display: flex;
+      flex-direction: column; align-items: center;
+    }
+    h1 {
+      margin: 20px 0 10px; font-size: 1.8rem; text-align: center;
+    }
+    #portal, #multiPortal {
+      width: 90vw; max-width: 1080px; height: 1600px; max-height: 90vh;
+      background: #111; border: 12px solid cyan; border-radius: 40px;
+      box-shadow: 0 0 50px cyan; position: relative; overflow: hidden;
+      animation: blinkFrame 2s infinite;
+    }
+    #remoteVideo, #remoteVideoB, #remoteVideoC {
+      width: 100%; height: 100%; object-fit: cover;
+      border-radius: 28px; position: relative; z-index: 3;
+    }
+    #multiPortal { display: none; flex-direction: row; }
+    #multiPortal video { width: 50%; height: 100%; object-fit: cover; border: none; border-radius: 0; }
+    #botonesEfectos, #botonesConexion {
+      position: fixed; top: 50%; transform: translateY(-50%);
+      display: flex; flex-direction: column; gap: 20px; z-index: 6;
+    }
+    #botonesEfectos { left: 20px; }
+    #botonesConexion { right: 20px; }
+    .boton {
+      background: rgba(0, 255, 255, 0.2); border: 2px solid cyan;
+      color: white; font-size: 1rem; padding: 10px 20px;
+      border-radius: 20px; cursor: pointer; transition: background 0.3s, transform 0.3s;
+    }
+    .boton:hover { transform: scale(1.1); }
+    .activo { background: rgba(255, 255, 0, 0.2); border: 2px solid yellow; color: yellow; }
+    .inactivo { background: rgba(128, 128, 128, 0.2); border: 2px solid gray; color: gray; }
+    .activo:hover { background: rgba(255, 255, 0, 0.4); }
+    .inactivo:hover { background: rgba(128, 128, 128, 0.4); }
+    @keyframes blinkFrame {
+      0%, 100% { box-shadow: 0 0 50px cyan; }
+      50% { box-shadow: 0 0 80px cyan; }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    @keyframes blinkLogo {
+      0%, 100% { opacity: 0.08; }
+      50% { opacity: 0.15; }
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🔵 Portal Vizual - MPORTAL</h1>
+
+<div id="portal">
+  <canvas id="remolinoCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none;"></canvas>
+
+  <img src="LOGO_VIZUAL_4K (1).png" id="logoVizual" style="
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70%; opacity: 0.08;
+    animation: blinkLogo 3s infinite;
+    z-index: 2; pointer-events: none;">
+
+  <video id="remoteVideo" autoplay playsinline></video>
+
+  <div id="statusText" style="
+    position: absolute; top: 50%;
+    left: 50%; transform: translate(-50%, -50%);
+    font-size: 2rem; color: cyan;
+    animation: blink 1s infinite; z-index: 4;">
+    Ningún portal conectado
+  </div>
+</div>
+
+<div id="multiPortal">
+  <video id="remoteVideoB" autoplay playsinline></video>
+  <video id="remoteVideoC" autoplay playsinline></video>
+</div>
+
+<div id="botonesEfectos">
+  <button class="boton" onclick="efectoAzul()">Efecto Azul</button>
+  <button class="boton" onclick="efectoGlitch()">Glitch</button>
+  <button class="boton" onclick="efectoParpadeo()">Parpadeo</button>
+  <button class="boton" onclick="zoomIn()">Zoom In</button>
+  <button class="boton" onclick="zoomOut()">Zoom Out</button>
+</div>
+
+<div id="botonesConexion">
+  <button id="connectB" class="boton" onclick="toggleConnection('puntoB')">Conectar a B</button>
+  <button id="connectC" class="boton" onclick="toggleConnection('puntoC')">Conectar a C</button>
+  <button id="combinarBtn" class="boton inactivo" onclick="toggleCombinar()">Combinar Portales</button>
+</div>
+
+<script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
+
+<script>
+// AQUI va todo tu JavaScript de conexión, efectos, reconexión automática, etc.
+// (Si quieres te lo paso ya completo en la siguiente respuesta.)
+
+</script>
+<script>
+// Inicializar PeerJS
+const peer = new Peer('puntoA', {
+  host: '164.90.157.189',  // Tu IP de Digital Ocean
+  port: 9000,
+  path: '/myapp',
+  secure: false,          // Porque no es https (es http normal)
+  debug: 2
+});
+
+
+const remoteVideo = document.getElementById('remoteVideo');
+const remoteVideoB = document.getElementById('remoteVideoB');
+const remoteVideoC = document.getElementById('remoteVideoC');
+
+const connectB = document.getElementById('connectB');
+const connectC = document.getElementById('connectC');
+const combinarBtn = document.getElementById('combinarBtn');
+
+let currentCall = null;
+let multiCallB = null;
+let multiCallC = null;
+let combinado = false;
+
+peer.on('open', id => {
+  console.log('Conectado como', id);
+});
+
+peer.on('call', call => {
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+    call.answer(stream);
+    call.on('stream', remoteStream => {
+      remoteVideo.srcObject = remoteStream;
+      ocultarRemolino();
+    });
+    call.on('close', () => {
+      mostrarRemolino();
+    });
+  });
+});
+
+// Funciones de conexión
+function toggleConnection(targetId) {
+  if (currentCall) {
+    currentCall.close();
+    currentCall = null;
+    mostrarRemolino();
+    updateButtonStates();
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+    const call = peer.call(targetId, stream);
+    call.on('stream', remoteStream => {
+      remoteVideo.srcObject = remoteStream;
+      ocultarRemolino();
+    });
+    call.on('close', () => {
+      mostrarRemolino();
+      updateButtonStates();
+    });
+    call.on('error', () => {
+      mostrarRemolino();
+      updateButtonStates();
+    });
+    currentCall = call;
+    updateButtonStates();
+  });
+}
+
+// Función de combinar portales
+function toggleCombinar() {
+  combinado = !combinado;
+  if (combinado) {
+    combinarBtn.classList.remove('inactivo');
+    combinarBtn.classList.add('activo');
+    conectarMulti();
+  } else {
+    combinarBtn.classList.remove('activo');
+    combinarBtn.classList.add('inactivo');
+    desconectarMulti();
+  }
+}
+
+// Conectar multiportales
+function conectarMulti() {
+  document.getElementById('portal').style.display = "none";
+  document.getElementById('multiPortal').style.display = "flex";
+
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+    multiCallB = peer.call('puntoB', stream);
+    multiCallB.on('stream', remoteStream => {
+      remoteVideoB.srcObject = remoteStream;
+    });
+
+    multiCallC = peer.call('puntoC', stream);
+    multiCallC.on('stream', remoteStream => {
+      remoteVideoC.srcObject = remoteStream;
+    });
+  });
+}
+
+// Desconectar multiportales
+function desconectarMulti() {
+  document.getElementById('multiPortal').style.display = "none";
+  document.getElementById('portal').style.display = "flex";
+
+  if (multiCallB) multiCallB.close();
+  if (multiCallC) multiCallC.close();
+}
+
+// Actualizar botones
+function updateButtonStates() {
+  if (currentCall) {
+    connectB.textContent = "Desconectar";
+    connectC.textContent = "Desconectar";
+    connectB.classList.add('activo');
+    connectC.classList.add('activo');
+  } else {
+    connectB.textContent = "Conectar a B";
+    connectC.textContent = "Conectar a C";
+    connectB.classList.remove('activo');
+    connectC.classList.remove('activo');
+  }
+}
+
+// Remolino y Logo
+function mostrarRemolino() {
+  document.getElementById('remolinoCanvas').style.display = "block";
+  document.getElementById('statusText').style.display = "block";
+  document.getElementById('logoVizual').style.display = "block";
+}
+function ocultarRemolino() {
+  document.getElementById('remolinoCanvas').style.display = "none";
+  document.getElementById('statusText').style.display = "none";
+  document.getElementById('logoVizual').style.display = "none";
+}
+
+// Efectos de video
+function efectoAzul() {
+  remoteVideo.style.filter = "hue-rotate(180deg)";
+}
+function efectoGlitch() {
+  remoteVideo.style.filter = "contrast(200%) brightness(150%)";
+}
+function efectoParpadeo() {
+  remoteVideo.style.animation = "blink 1s infinite";
+}
+function zoomIn() {
+  remoteVideo.style.transform = "scale(1.2)";
+}
+function zoomOut() {
+  remoteVideo.style.transform = "scale(1)";
+}
+
+// Remolino animado
+const canvas = document.getElementById('remolinoCanvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+for (let i = 0; i < 100; i++) {
+  particles.push({
+    angle: Math.random() * 2 * Math.PI,
+    radius: Math.random() * Math.min(canvas.width, canvas.height) / 3,
+    speed: 0.002 + Math.random() * 0.003,
+    size: 2 + Math.random() * 3,
+    opacity: 0.3 + Math.random() * 0.5
+  });
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  particles.forEach(p => {
+    p.angle += p.speed;
+    const x = canvas.width / 2 + p.radius * Math.cos(p.angle);
+    const y = canvas.height / 2 + p.radius * Math.sin(p.angle);
+
+    ctx.beginPath();
+    ctx.arc(x, y, p.size, 0, 2 * Math.PI);
+    ctx.fillStyle = `rgba(0, 255, 255, ${p.opacity})`;
+    ctx.fill();
+  });
+
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+
+</body>
+</html>
