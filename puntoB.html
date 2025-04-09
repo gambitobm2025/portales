@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Portal Vizual - B</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      width: 100vw; height: 100vh;
+      background: black;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+    #remoteVideo {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+    }
+  </style>
+</head>
+
+<body>
+
+<video id="remoteVideo" autoplay playsinline></video>
+
+<script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
+<script>
+const remoteVideo = document.getElementById('remoteVideo');
+
+const peer = new Peer('puntoB', {
+  host: '164.90.157.189',
+  port: 9000,
+  path: '/myapp'
+});
+
+let localStream;
+
+navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+  localStream = stream;
+});
+
+peer.on('call', call => {
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+    call.answer(stream);
+    call.on('stream', remoteStream => {
+      remoteVideo.srcObject = remoteStream;
+    });
+  });
+});
+
+function connectToA() {
+  const call = peer.call('puntoA', localStream);
+  call.on('stream', remoteStream => {
+    remoteVideo.srcObject = remoteStream;
+  });
+}
+</script>
+
+</body>
+</html>
+
